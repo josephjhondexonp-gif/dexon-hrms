@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dexon Monitor — My Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0d0d0d;--sur:#141414;--sur2:#1c1c1c;--bdr:#2a2a2a;--red:#cc0000;--red2:#e60000;--blue:#3d5ee6;--green:#22c55e;--yellow:#f59e0b;--txt:#e8e8e8;--muted:#666;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'Source Code Pro',monospace;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(204,0,0,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(61,94,230,0.02) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px;position:relative;z-index:1;}
+header{border-bottom:1px solid var(--bdr);position:sticky;top:0;background:rgba(13,13,13,0.97);backdrop-filter:blur(16px);z-index:100;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 0;}
+.logo-area{display:flex;align-items:center;gap:12px;}
+.logo-area img{height:42px;}
+.logo-div{width:1px;height:30px;background:var(--bdr);}
+.logo-sub{font-family:'Raleway',sans-serif;font-weight:600;font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.logo-sub span{color:var(--red);}
+.user-info{display:flex;align-items:center;gap:12px;}
+.user-pill{background:var(--sur2);border:1px solid var(--bdr);padding:7px 14px;border-radius:6px;font-size:11px;display:flex;align-items:center;gap:8px;}
+.user-avatar{width:26px;height:26px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Raleway',sans-serif;font-weight:800;font-size:11px;color:white;}
+.logout-btn{background:transparent;border:1px solid var(--bdr);color:var(--muted);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Source Code Pro',monospace;transition:all 0.2s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+main{padding:28px 0 60px;}
+.welcome{margin-bottom:28px;}
+.welcome-name{font-family:'Raleway',sans-serif;font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px;}
+.welcome-name::before{content:'';width:4px;height:24px;background:linear-gradient(var(--red),var(--blue));border-radius:2px;}
+.welcome-sub{color:var(--muted);font-size:12px;margin-top:4px;padding-left:14px;}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--bdr);margin-bottom:24px;}
+.tab{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);padding:10px 20px;cursor:pointer;font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;transition:all 0.2s;}
+.tab:hover{color:var(--txt);}
+.tab.on{color:var(--red);border-bottom-color:var(--red);}
+.pane{display:none;}
+.pane.on{display:block;}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.kpi:hover{border-color:var(--red);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.kpi.k1::after{background:linear-gradient(90deg,var(--blue),transparent);}
+.kpi.k2::after{background:linear-gradient(90deg,var(--green),transparent);}
+.kpi.k3::after{background:linear-gradient(90deg,var(--red),transparent);}
+.kpi.k4::after{background:linear-gradient(90deg,var(--yellow),transparent);}
+.kpi-ico{font-size:20px;margin-bottom:8px;}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.kpi-val{font-family:'Raleway',sans-serif;font-size:30px;font-weight:800;line-height:1;margin-bottom:4px;}
+.kpi.k1 .kpi-val{color:#5b78ee;}
+.kpi.k2 .kpi-val{color:var(--green);}
+.kpi.k3 .kpi-val{color:var(--red2);}
+.kpi.k4 .kpi-val{color:var(--yellow);}
+.kpi-sub{font-size:10px;color:var(--muted);}
+
+/* STATUS CARD */
+.status-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.status-left{display:flex;align-items:center;gap:16px;}
+.status-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.status-icon.active{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);}
+.status-icon.idle{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);}
+.status-icon.offline{background:rgba(102,102,102,0.1);border:1px solid rgba(102,102,102,0.2);}
+.status-txt .title{font-family:'Raleway',sans-serif;font-size:16px;font-weight:800;}
+.status-txt .sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.status-right{display:flex;gap:10px;}
+.btn-red{background:var(--red);border:none;color:white;padding:10px 22px;border-radius:6px;cursor:pointer;font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;transition:all 0.2s;}
+.btn-red:hover{background:var(--red2);}
+.btn-out{background:transparent;border:1px solid var(--red);color:var(--red);padding:10px 22px;border-radius:6px;cursor:pointer;font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;transition:all 0.2s;}
+.btn-out:hover{background:var(--red);color:white;}
+
+/* ACTIVITY TABLE */
+.tbl-wrap{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--sur2);}
+th{padding:12px 18px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--bdr);}
+td{padding:12px 18px;font-size:12px;border-bottom:1px solid rgba(42,42,42,0.4);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(204,0,0,0.03);}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;}
+.badge.punch_in{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+.badge.punch_out{background:rgba(204,0,0,0.1);color:var(--red2);border:1px solid rgba(204,0,0,0.2);}
+
+/* SCREENSHOTS */
+.ss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:24px;}
+.ss-card{background:var(--sur);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;transition:all 0.2s;}
+.ss-card:hover{border-color:var(--red);transform:translateY(-2px);}
+.ss-img{width:100%;height:148px;background:var(--sur2);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;}
+.ss-img img{width:100%;height:100%;object-fit:cover;}
+.ss-info{padding:10px 14px;}
+.ss-app{font-family:'Raleway',sans-serif;font-weight:700;font-size:12px;}
+.ss-time{font-size:10px;color:var(--muted);margin-top:3px;}
+
+/* PAYSLIP */
+.payslip-controls{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:22px;margin-bottom:22px;}
+.ps-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.fg select{background:var(--sur2);border:1px solid var(--bdr);color:var(--txt);padding:9px 12px;border-radius:6px;font-family:'Source Code Pro',monospace;font-size:12px;outline:none;}
+.fg select:focus{border-color:var(--red);}
+.fg select option{background:var(--sur2);}
+#ps-box{background:white;color:#111;padding:36px;border-radius:8px;font-family:'Source Code Pro',monospace;}
+.ps-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #cc0000;margin-bottom:20px;}
+.ps-logo{height:44px;}
+.ps-co-name{font-family:'Raleway',sans-serif;font-size:16px;font-weight:800;color:#cc0000;text-align:right;}
+.ps-co-addr{font-size:9px;color:#888;margin-top:3px;line-height:1.6;text-align:right;}
+.ps-ttl{text-align:center;font-family:'Raleway',sans-serif;font-size:14px;font-weight:800;color:#cc0000;letter-spacing:2px;margin-bottom:20px;text-transform:uppercase;}
+.ps-info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;padding:14px;background:#f8f8f8;border-radius:8px;}
+.ps-lbl{font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;}
+.ps-val{font-size:12px;color:#111;font-weight:600;margin-top:2px;}
+.ps-tbl{width:100%;border-collapse:collapse;margin-bottom:16px;}
+.ps-tbl th{background:#cc0000;color:white;padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+.ps-tbl td{padding:9px 12px;border-bottom:1px solid #eee;font-size:11px;}
+.ps-tbl .ded{color:#cc0000;}
+.ps-net{background:#0d0d0d;color:white;padding:14px 18px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.ps-net-lbl{font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;}
+.ps-net-val{font-family:'Raleway',sans-serif;font-size:20px;font-weight:800;color:#22c55e;}
+.ps-foot{text-align:center;font-size:9px;color:#999;border-top:1px solid #eee;padding-top:14px;}
+.ps-stamp{display:inline-block;border:2px solid #cc0000;color:#cc0000;padding:5px 18px;border-radius:4px;font-family:'Raleway',sans-serif;font-weight:700;font-size:11px;margin-top:10px;letter-spacing:2px;}
+
+.sec{font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:1px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.empty{text-align:center;padding:40px;color:var(--muted);}
+.empty-ico{font-size:32px;margin-bottom:10px;}
+.empty-txt{font-size:13px;color:var(--txt);font-family:'Raleway',sans-serif;font-weight:700;margin-bottom:4px;}
+.loading{text-align:center;padding:32px;color:var(--muted);font-size:12px;}
+.spin{width:20px;height:20px;border:2px solid var(--bdr);border-top-color:var(--red);border-radius:50%;animation:sp 0.7s linear infinite;margin:0 auto 10px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--sur);border:1px solid var(--bdr);padding:12px 20px;border-radius:8px;font-size:12px;z-index:9999;transform:translateY(100px);transition:transform 0.3s;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.toast.show{transform:translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red2);}
+@media(max-width:700px){.kpi-row{grid-template-columns:1fr 1fr}.status-card{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hdr">
+      <div class="logo-area">
+        <img src="https://dexonsoftwarepvtltd.com/assets/img/dexon21.png" alt="Dexon" onerror="this.style.display='none'">
+        <div class="logo-div"></div>
+        <div class="logo-sub">My <span>Portal</span></div>
+      </div>
+      <div class="user-info">
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <span id="user-name-hdr">Loading...</span>
+        </div>
+        <button class="logout-btn" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="welcome">
+    <div class="welcome-name" id="welcome-name">Welcome!</div>
+    <div class="welcome-sub" id="welcome-sub">Loading your data...</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tab-dashboard" onclick="showTab('dashboard')">📊 My Dashboard</button>
+    
+    <button class="tab" id="tab-payslip" onclick="showTab('payslip')">💰 My Payslip</button>
+  </div>
+
+  <!-- DASHBOARD PANE -->
+  <div class="pane on" id="pane-dashboard">
+    <!-- Status Card -->
+    <div class="status-card" id="status-card">
+      <div class="status-left">
+        <div class="status-icon offline" id="status-icon">⚫</div>
+        <div class="status-txt">
+          <div class="title" id="status-title">Not Punched In</div>
+          <div class="sub" id="status-sub">Use the desktop agent to punch in</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi k1"><div class="kpi-ico">⏱️</div><div class="kpi-lbl">Today Active</div><div class="kpi-val" id="k-active">—</div><div class="kpi-sub">Hours worked</div></div>
+      <div class="kpi k2"><div class="kpi-ico">📊</div><div class="kpi-lbl">Productivity</div><div class="kpi-val" id="k-prod">—</div><div class="kpi-sub">Today's score</div></div>
+      <div class="kpi k3"><div class="kpi-ico">📅</div><div class="kpi-lbl">Days This Month</div><div class="kpi-val" id="k-days">—</div><div class="kpi-sub">Active days</div></div>
+      <div class="kpi k4"><div class="kpi-ico">🕐</div><div class="kpi-lbl">Total Hours</div><div class="kpi-val" id="k-total">—</div><div class="kpi-sub">This month</div></div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="sec">📋 My Recent Activity</div>
+    <div class="tbl-wrap"><div id="activity-tbl"><div class="loading"><div class="spin"></div>Loading activity...</div></div></div>
+  </div>
+
+  <!-- PAYSLIP PANE -->
+  <div class="pane" id="pane-payslip">
+    <div class="payslip-controls">
+      <div class="sec" style="margin-bottom:16px;">💰 Generate My Payslip</div>
+      <div class="ps-row">
+        <div class="fg"><label>Month</label><select id="ps-month"></select></div>
+        <div class="fg"><label>Year</label><select id="ps-year"></select></div>
+        <button class="btn-red" onclick="generateMyPayslip()">Generate Payslip</button>
+        <button class="btn-red" style="background:var(--blue)" onclick="downloadMyPayslip()">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div id="ps-box"></div>
+  </div>
+</div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = "https://uhlwdykyyzrmiylyuqxr.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVobHdkeWt5eXpybWl5bHl1cXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjk3NzMsImV4cCI6MjA5MzcwNTc3M30.p3A8D6VzlreiZLkGsQnlpOr804RUK6oZJb1946_HJuE";
+const HDR = {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
+const LOGO = "https://dexonsoftwarepvtltd.com/assets/img/dexon21.png";
+const MONTHS = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── SESSION CHECK ─────────────────────────────────────────────────────────────
+// Check localStorage first, then URL params
+let saved = localStorage.getItem('dexon_user');
+
+// If no session, check if opened from desktop app via URL hash
+if(!saved) {
+  const hash = window.location.hash;
+  if(hash && hash.startsWith('#session=')) {
+    try {
+      const sessionData = decodeURIComponent(hash.replace('#session=',''));
+      saved = sessionData;
+      localStorage.setItem('dexon_user', sessionData);
+      window.location.hash = '';
+    } catch(e) {}
+  }
+}
+
+if(!saved) { window.location.href='login.html'; }
+const USER = JSON.parse(saved||'{}');
+if(USER.role === 'admin') { window.location.href='dexon_dashboard.html'; }
+
+// ── INIT UI ───────────────────────────────────────────────────────────────────
+document.getElementById('user-avatar').textContent = (USER.name||'?').charAt(0).toUpperCase();
+document.getElementById('user-name-hdr').textContent = USER.name;
+document.getElementById('welcome-name').innerHTML = `<span style="width:4px;height:24px;background:linear-gradient(var(--red),var(--blue));border-radius:2px;display:inline-block;margin-right:10px;flex-shrink:0"></span>Welcome, ${USER.name}!`;
+document.getElementById('welcome-sub').textContent = USER.designation ? `${USER.designation} · ${USER.department||'Dexon'}` : 'Dexon Software Pvt. Ltd.';
+
+function logout() { localStorage.removeItem('dexon_user'); window.location.href='login.html'; }
+
+function showTab(name) {
+  ['dashboard','payslip'].forEach(t => {
+    document.getElementById('pane-'+t).classList.remove('on');
+    document.getElementById('tab-'+t).classList.remove('on');
+  });
+  document.getElementById('pane-'+name).classList.add('on');
+  document.getElementById('tab-'+name).classList.add('on');
+  
+  if(name==='payslip') initPayslipControls();
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+function fmtTime(iso) { return iso?new Date(iso).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'; }
+function fmtDT(iso) { return iso?new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—'; }
+function fmtMins(m) { if(!m) return '0h 0m'; const h=Math.floor(m/60),mn=m%60; return h>0?h+'h '+mn+'m':mn+'m'; }
+function fmtINR(n) { return 'Rs. '+Math.round(n).toLocaleString('en-IN'); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+async function sbFetch(table, q) {
+  const r = await fetch(SB_URL+'/rest/v1/'+table+'?'+q,{headers:HDR});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+// ── LOAD DASHBOARD ────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const td = today();
+  const yr = new Date().getFullYear();
+  const mo = new Date().getMonth()+1;
+  const moStart = `${yr}-${String(mo).padStart(2,'0')}-01`;
+  const moEnd = `${yr}-${String(mo).padStart(2,'0')}-${new Date(yr,mo,0).getDate()}`;
+
+  try {
+    // Today's logs
+    const todayLogs = await sbFetch('activity_logs',
+      `employee_email=eq.${encodeURIComponent(USER.email)}&timestamp=gte.${td}T00:00:00.000Z&timestamp=lte.${td}T23:59:59.999Z&order=timestamp.desc&limit=50`);
+
+    // Month logs
+    const monthLogs = await sbFetch('activity_logs',
+      `employee_email=eq.${encodeURIComponent(USER.email)}&timestamp=gte.${moStart}T00:00:00.000Z&timestamp=lte.${moEnd}T23:59:59.999Z&order=timestamp.desc&limit=500`);
+
+    // Today status
+    let activeMins=0, idleMins=0, productivity=0, isPunchedIn=false, punchInTime=null;
+    todayLogs.forEach(log => {
+      if(log.event_type==='punch_in'){isPunchedIn=true;punchInTime=log.timestamp;}
+      if(log.event_type==='punch_out'){isPunchedIn=false;if(log.data){activeMins=log.data.productive_mins||0;idleMins=log.data.idle_mins||0;productivity=log.data.productivity_pct||0;}}
+      if(log.event_type==='activity_summary'&&log.data){activeMins=Math.floor((log.data.active_seconds||0)/60);idleMins=Math.floor((log.data.idle_seconds||0)/60);const tot=activeMins+idleMins;productivity=tot>0?Math.round(activeMins/tot*100):0;isPunchedIn=!log.data.is_idle;}
+    });
+
+    // Status card
+    const icon = document.getElementById('status-icon');
+    const title = document.getElementById('status-title');
+    const sub = document.getElementById('status-sub');
+    if(isPunchedIn) {
+      icon.className='status-icon active'; icon.textContent='🟢';
+      title.textContent='Currently Active';
+      sub.textContent=`Punched in at ${fmtTime(punchInTime)}`;
+    } else if(activeMins > 0) {
+      icon.className='status-icon idle'; icon.textContent='🟡';
+      title.textContent='Punched Out';
+      sub.textContent=`Worked ${fmtMins(activeMins)} today`;
+    } else {
+      icon.className='status-icon offline'; icon.textContent='⚫';
+      title.textContent='Not Punched In Today';
+      sub.textContent='Use the desktop agent to start tracking';
+    }
+
+    // KPIs
+    document.getElementById('k-active').textContent = fmtMins(activeMins);
+    document.getElementById('k-prod').textContent = productivity+'%';
+
+    // Month summary
+    const days = new Set();
+    let monthMins = 0;
+    monthLogs.forEach(log => {
+      const day = log.timestamp?.split('T')[0];
+      if(day) days.add(day);
+      if(log.event_type==='punch_out'&&log.data) monthMins+=(log.data.productive_mins||0);
+    });
+    document.getElementById('k-days').textContent = days.size;
+    document.getElementById('k-total').textContent = fmtMins(monthMins);
+
+    // Activity table
+    const recent = todayLogs.filter(l=>['punch_in','punch_out'].includes(l.event_type)).slice(0,15);
+    if(!recent.length) {
+      document.getElementById('activity-tbl').innerHTML='<div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">No activity today</div></div>';
+    } else {
+      const rows = recent.map(l=>`<tr>
+        <td><span class="badge ${l.event_type}">${l.event_type==='punch_in'?'🟢 Punch In':'🔴 Punch Out'}</span></td>
+        <td>${fmtDT(l.timestamp)}</td>
+        <td>${l.event_type==='punch_out'&&l.data?'Active: '+fmtMins(l.data.productive_mins||0)+' | Idle: '+fmtMins(l.data.idle_mins||0):'—'}</td>
+        <td>${l.event_type==='punch_out'&&l.data?(l.data.productivity_pct||0)+'%':'—'}</td>
+      </tr>`).join('');
+      document.getElementById('activity-tbl').innerHTML=`<table><thead><tr><th>Event</th><th>Time</th><th>Hours</th><th>Productivity</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+  } catch(err) {
+    document.getElementById('activity-tbl').innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-txt">Error loading data</div></div>`;
+  }
+}
+
+// ── LOAD SCREENSHOTS ──────────────────────────────────────────────────────────
+async function loadScreenshots() {
+  document.getElementById('ss-container').innerHTML='<div class="loading"><div class="spin"></div>Loading your screenshots...</div>';
+  try {
+    const list = await sbFetch('screenshots', `employee_email=eq.${encodeURIComponent(USER.email)}&order=timestamp.desc&limit=20`);
+    if(!list.length) { document.getElementById('ss-container').innerHTML='<div class="empty"><div class="empty-ico">📸</div><div class="empty-txt">No screenshots yet</div><div style="font-size:11px;color:var(--muted)">Screenshots are taken every 10 mins during active hours</div></div>'; return; }
+    document.getElementById('ss-container').innerHTML='<div class="ss-grid">'+list.map(s=>`<div class="ss-card"><div class="ss-img">${s.image_data?`<img src="data:image/jpeg;base64,${s.image_data}" loading="lazy">`:'No image'}</div><div class="ss-info"><div class="ss-app">${s.app_name||'Unknown app'}</div><div class="ss-time">${fmtDT(s.timestamp)}</div></div></div>`).join('')+'</div>';
+  } catch(err) {
+    document.getElementById('ss-container').innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-txt">Error loading screenshots</div></div>';
+  }
+}
+
+// ── PAYSLIP ───────────────────────────────────────────────────────────────────
+let myPayslipData = null;
+
+function initPayslipControls() {
+  const ms = document.getElementById('ps-month');
+  const ys = document.getElementById('ps-year');
+  if(ms.options.length) return;
+  MONTHS.slice(1).forEach((m,i)=>ms.add(new Option(m,i+1)));
+  ms.value = new Date().getMonth()+1;
+  const yr = new Date().getFullYear();
+  for(let y=yr-1;y<=yr+1;y++) ys.add(new Option(y,y));
+  ys.value = yr;
+}
+
+async function generateMyPayslip() {
+  const month = +document.getElementById('ps-month').value;
+  const year = +document.getElementById('ps-year').value;
+  document.getElementById('ps-box').innerHTML='<div class="loading"><div class="spin"></div>Generating your payslip...</div>';
+
+  try {
+    // Get user's CTC from users table
+    const users = await sbFetch('users', `email=eq.${encodeURIComponent(USER.email)}&select=ctc`);
+    const ctc = users[0]?.ctc || 0;
+
+    if(!ctc) {
+      document.getElementById('ps-box').innerHTML='<div class="empty"><div class="empty-ico">💰</div><div class="empty-txt">CTC not set</div><div style="font-size:11px;color:var(--muted)">Please contact your admin to set your CTC</div></div>';
+      return;
+    }
+
+    // Get month logs
+    const lastDay = new Date(year,month,0).getDate();
+    const start = `${year}-${String(month).padStart(2,'0')}-01`;
+    const end = `${year}-${String(month).padStart(2,'0')}-${lastDay}`;
+    const logs = await sbFetch('activity_logs',
+      `employee_email=eq.${encodeURIComponent(USER.email)}&timestamp=gte.${start}T00:00:00.000Z&timestamp=lte.${end}T23:59:59.999Z&order=timestamp.desc&limit=500`);
+
+    let prodMins = 0;
+    logs.forEach(log => { if(log.event_type==='punch_out'&&log.data) prodMins+=(log.data.productive_mins||0); });
+
+    const prodHrs = +(prodMins/60).toFixed(2);
+    const wDays = 26, stdHrs = 8;
+    const earnedDays = Math.min(+(prodHrs/stdHrs).toFixed(2), wDays);
+    const dailyRate = ctc/wDays;
+    const gross = dailyRate*earnedDays;
+    const pf = gross*0.12;
+    const net = gross-pf;
+
+    myPayslipData = {name:USER.name, email:USER.email, ctc, prodHrs, earnedDays, wDays, stdHrs, dailyRate, gross, pf, net, month, year};
+
+    document.getElementById('ps-box').innerHTML=`
+      <div class="ps-hdr">
+        <img class="ps-logo" src="${LOGO}" onerror="this.style.display='none'" alt="Dexon">
+        <div><div class="ps-co-name">Dexon Software Pvt. Ltd.</div><div class="ps-co-addr">13th Floor, Raheja Mindspace, Madhapur<br>Hyderabad — 500081 | hr@dexonsoftwarepvtltd.com</div></div>
+      </div>
+      <div class="ps-ttl">Salary Payslip — ${MONTHS[month]} ${year}</div>
+      <div class="ps-info">
+        <div><div class="ps-lbl">Employee Name</div><div class="ps-val">${USER.name}</div></div>
+        <div><div class="ps-lbl">Email</div><div class="ps-val">${USER.email}</div></div>
+        <div><div class="ps-lbl">Pay Period</div><div class="ps-val">${MONTHS[month]} ${year}</div></div>
+        <div><div class="ps-lbl">Monthly CTC</div><div class="ps-val">${fmtINR(ctc)}</div></div>
+        <div><div class="ps-lbl">Productive Hours</div><div class="ps-val">${prodHrs} hours</div></div>
+        <div><div class="ps-lbl">Earned Days</div><div class="ps-val">${earnedDays} of ${wDays}</div></div>
+        <div><div class="ps-lbl">Std Hours/Day</div><div class="ps-val">${stdHrs} hrs</div></div>
+        <div><div class="ps-lbl">Daily Rate</div><div class="ps-val">${fmtINR(dailyRate)}/day</div></div>
+      </div>
+      <table class="ps-tbl"><thead><tr><th>Earnings</th><th>Amount</th></tr></thead><tbody><tr><td>Basic (Productivity Based)</td><td>${fmtINR(gross)}</td></tr></tbody></table>
+      <table class="ps-tbl"><thead><tr><th>Deductions</th><th>Amount</th></tr></thead><tbody><tr><td>Provident Fund (PF - 12%)</td><td class="ded">- ${fmtINR(pf)}</td></tr></tbody></table>
+      <div class="ps-net"><div class="ps-net-lbl">💰 Net Salary Payable</div><div class="ps-net-val">${fmtINR(net)}</div></div>
+      <div class="ps-foot"><div>System-generated payslip · Dexon Software Pvt. Ltd.</div><div class="ps-stamp">APPROVED</div></div>`;
+
+  } catch(err) {
+    document.getElementById('ps-box').innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-txt">Error generating payslip</div></div>`;
+  }
+}
+
+function downloadMyPayslip() {
+  if(!myPayslipData) { showToast('Please generate payslip first!','error'); return; }
+  const e = myPayslipData;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:'a4'});
+  doc.setFillColor(204,0,0); doc.rect(0,0,210,16,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('Dexon Software Pvt. Ltd.',14,10);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.text('SALARY PAYSLIP',162,10);
+  doc.setTextColor(50,50,50); doc.setFontSize(8);
+  doc.text('13th Floor, Raheja Mindspace, Madhapur, Hyderabad - 500081',14,23);
+  doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(204,0,0);
+  doc.text(`Payslip: ${MONTHS[e.month]} ${e.year}`,14,35);
+  doc.setFillColor(248,248,248); doc.rect(14,40,182,34,'F');
+  doc.setFontSize(8);
+  const info=[['Employee',e.name],['Email',e.email],['CTC',fmtINR(e.ctc)],['Prod Hours',e.prodHrs+'h'],['Earned Days',e.earnedDays+' of '+e.wDays],['Daily Rate',fmtINR(e.dailyRate)]];
+  info.forEach(([l,v],i)=>{const col=i<3?0:1,row=i%3,x=18+col*92,y=48+row*10;doc.setFont('helvetica','bold');doc.setTextColor(150,150,150);doc.text(l,x,y);doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);doc.text(String(v),x,y+4);});
+  let dy=80;
+  doc.setFillColor(204,0,0);doc.rect(14,dy,182,8,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('EARNINGS',18,dy+5.5);doc.text('AMOUNT',170,dy+5.5);dy+=8;
+  doc.setFillColor(255,255,255);doc.rect(14,dy,182,10,'F');doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.text('Basic Salary',18,dy+6.5);doc.setFont('helvetica','bold');doc.text(fmtINR(e.gross),170,dy+6.5);dy+=14;
+  doc.setFillColor(204,0,0);doc.rect(14,dy,182,8,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.text('DEDUCTIONS',18,dy+5.5);doc.text('AMOUNT',170,dy+5.5);dy+=8;
+  doc.setFillColor(255,245,245);doc.rect(14,dy,182,9,'F');doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.text('PF (12%)',18,dy+5.5);doc.setTextColor(204,0,0);doc.setFont('helvetica','bold');doc.text('- '+fmtINR(e.pf),170,dy+5.5);dy+=14;
+  doc.setFillColor(13,13,13);doc.rect(14,dy,182,16,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('NET SALARY PAYABLE',18,dy+10);doc.setTextColor(34,197,94);doc.setFontSize(14);doc.text(fmtINR(e.net),148,dy+10);
+  doc.save(`My_Payslip_${MONTHS[e.month]}_${e.year}.pdf`);
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+loadDashboard();
+setInterval(loadDashboard, 60000);
+</script>
+</body>
+</html>

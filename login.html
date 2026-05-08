@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dexon Monitor — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700;800&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d0d0d;color:#e8e8e8;font-family:'Source Code Pro',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(204,0,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(61,94,230,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+.box{background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:44px 40px;width:100%;max-width:420px;position:relative;z-index:1;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#cc0000,#3d5ee6);border-radius:16px 16px 0 0;}
+.logo-wrap{text-align:center;margin-bottom:28px;}
+.logo-wrap img{height:52px;width:auto;}
+.logo-wrap .fallback{font-family:'Raleway',sans-serif;font-size:24px;font-weight:800;color:#cc0000;}
+.title{font-family:'Raleway',sans-serif;font-size:22px;font-weight:800;text-align:center;margin-bottom:6px;}
+.subtitle{font-size:11px;color:#666;text-align:center;margin-bottom:32px;letter-spacing:0.5px;}
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px;}
+.fg input{width:100%;background:#1c1c1c;border:1px solid #2a2a2a;color:#e8e8e8;padding:12px 16px;border-radius:8px;font-family:'Source Code Pro',monospace;font-size:13px;outline:none;transition:border-color 0.2s;}
+.fg input:focus{border-color:#cc0000;}
+.role-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.role-btn{background:#1c1c1c;border:1px solid #2a2a2a;color:#888;padding:12px;border-radius:8px;cursor:pointer;font-family:'Raleway',sans-serif;font-size:12px;font-weight:700;text-align:center;transition:all 0.2s;}
+.role-btn:hover{border-color:#666;color:#e8e8e8;}
+.role-btn.selected{background:rgba(204,0,0,0.1);border-color:#cc0000;color:#cc0000;}
+.login-btn{width:100%;background:linear-gradient(135deg,#cc0000,#3d5ee6);border:none;color:white;padding:14px;border-radius:8px;cursor:pointer;font-family:'Raleway',sans-serif;font-size:14px;font-weight:800;letter-spacing:0.5px;transition:all 0.2s;margin-bottom:16px;}
+.login-btn:hover{opacity:0.9;transform:translateY(-1px);}
+.login-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.err{background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);color:#ff6666;padding:10px 14px;border-radius:6px;font-size:12px;display:none;margin-bottom:16px;}
+.err.show{display:block;}
+.footer-txt{text-align:center;font-size:10px;color:#444;margin-top:16px;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:sp 0.7s linear infinite;margin-right:8px;vertical-align:middle;}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo-wrap">
+    <img src="https://dexonsoftwarepvtltd.com/assets/img/dexon21.png" alt="Dexon" onerror="this.style.display='none';document.querySelector('.fallback').style.display='block'">
+    <div class="fallback" style="display:none">DEXON</div>
+  </div>
+  <div class="title">Welcome Back</div>
+  <div class="subtitle">Sign in to Dexon Employee Monitor</div>
+
+  <div class="role-wrap">
+    <div class="role-btn selected" id="role-admin" onclick="selectRole('admin')">🔐 Admin</div>
+    <div class="role-btn" id="role-standard" onclick="selectRole('standard')">👤 Employee</div>
+  </div>
+
+  <div class="fg">
+    <label>Work Email</label>
+    <input type="email" id="email" placeholder="you@dexonpvt.com" onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  <div class="fg">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+
+  <div class="err" id="err-msg"></div>
+
+  <button class="login-btn" id="login-btn" onclick="doLogin()">SIGN IN</button>
+  <div class="footer-txt">© 2026 Dexon Software Pvt. Ltd. · Hyderabad</div>
+</div>
+
+<script>
+const SB_URL = "https://uhlwdykyyzrmiylyuqxr.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVobHdkeWt5eXpybWl5bHl1cXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMjk3NzMsImV4cCI6MjA5MzcwNTc3M30.p3A8D6VzlreiZLkGsQnlpOr804RUK6oZJb1946_HJuE";
+const HDR = {"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"};
+
+let selectedRole = 'admin';
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('role-admin').classList.toggle('selected', role==='admin');
+  document.getElementById('role-standard').classList.toggle('selected', role==='standard');
+}
+
+function showErr(msg) {
+  const e = document.getElementById('err-msg');
+  e.textContent = msg;
+  e.classList.add('show');
+}
+
+function hideErr() { document.getElementById('err-msg').classList.remove('show'); }
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const btn = document.getElementById('login-btn');
+
+  hideErr();
+  if(!email || !password) { showErr('Please enter your email and password.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Signing in...';
+
+  try {
+    const r = await fetch(SB_URL+'/rest/v1/users?email=eq.'+encodeURIComponent(email)+'&select=*', {headers:HDR});
+    const users = await r.json();
+
+    if(!users.length) { showErr('No account found with this email.'); btn.disabled=false; btn.innerHTML='SIGN IN'; return; }
+
+    const user = users[0];
+    if(!user.is_active) { showErr('Your account has been deactivated. Contact admin.'); btn.disabled=false; btn.innerHTML='SIGN IN'; return; }
+    if(user.password !== password) { showErr('Incorrect password. Please try again.'); btn.disabled=false; btn.innerHTML='SIGN IN'; return; }
+    if(selectedRole === 'admin' && user.role !== 'admin') { showErr('You do not have admin access.'); btn.disabled=false; btn.innerHTML='SIGN IN'; return; }
+
+    // Save session
+    localStorage.setItem('dexon_user', JSON.stringify({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      department: user.department || '',
+      designation: user.designation || '',
+      ctc: user.ctc || 0,
+      loginTime: new Date().toISOString()
+    }));
+
+    // Redirect based on role
+    if(user.role === 'admin') {
+      window.location.href = 'dexon_dashboard.html';
+    } else {
+      window.location.href = 'employee_portal.html';
+    }
+
+  } catch(err) {
+    showErr('Connection error. Please try again.');
+    btn.disabled=false;
+    btn.innerHTML='SIGN IN';
+  }
+}
+
+// Auto redirect if already logged in
+const saved = localStorage.getItem('dexon_user');
+if(saved) {
+  const u = JSON.parse(saved);
+  if(u.role === 'admin') window.location.href = 'dexon_dashboard.html';
+  else window.location.href = 'employee_portal.html';
+}
+</script>
+</body>
+</html>
