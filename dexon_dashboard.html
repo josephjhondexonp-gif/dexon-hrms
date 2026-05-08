@@ -430,14 +430,16 @@ function renderTable(emps) {
       <td><div class="ename">${e.name}</div><div class="eemail">${e.email}</div></td>
       <td><span class="badge ${sc}"><span class="bdot"></span>${sc.charAt(0).toUpperCase()+sc.slice(1)}</span></td>
       <td><div>${fmtTime(e.punch_in)}</div><div style="font-size:10px;color:var(--muted)">Punch In</div></td>
+      <td><div>${fmtMins(e.online_mins||0)}</div><div style="font-size:10px;color:var(--muted)">Online</div></td>
       <td><div>${fmtMins(e.active_mins)}</div><div style="font-size:10px;color:var(--muted)">Active</div></td>
+      <td><div>${fmtMins(e.break_mins||0)}</div><div style="font-size:10px;color:var(--muted)">Break</div></td>
       <td><div>${fmtMins(e.idle_mins)}</div><div style="font-size:10px;color:var(--muted)">Idle</div></td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div class="pbar"><div class="pfill ${bc}" style="width:${p}%"></div></div><span style="font-size:11px">${p}%</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pbar"><div class="pfill ${bc}" style="width:${p}%"></div></div><span style="font-size:11px" title="Active mins / 8hrs">${p}%</span></div></td>
       <td style="color:var(--muted);font-size:11px">${e.current_app||'—'}</td>
       <td><button class="btn-sm" onclick="openSSModal('${e.email}','${e.name}')">📸 SS</button></td>
     </tr>`;
   }).join('');
-  c.innerHTML = `<table><thead><tr><th>Employee</th><th>Status</th><th>Punch In</th><th>Active</th><th>Idle</th><th>Productivity</th><th>App</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  c.innerHTML = `<table><thead><tr><th>Employee</th><th>Status</th><th>Punch In</th><th>Online</th><th>Active</th><th>Break</th><th>Idle</th><th>Productivity</th><th>App</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ── RENDER SCREENSHOTS ────────────────────────────────────────────────────────
